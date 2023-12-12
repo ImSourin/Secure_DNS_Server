@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dns-server
+spec:
+  replicas: 1  # Adjust the number of replicas as needed
+  selector:
+    matchLabels:
+      app: dns-server
+  template:
+    metadata:
+      labels:
+        app: dns-server
+    spec:
+      containers:
+        - name: dns-server
+          image: dns_server
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 31111
+              protocol: UDP
+              name: dns-svc-port
+          resources:
+            limits:
+              memory: "256Mi"
+              cpu: "0.5"
+            requests:
+              memory: "128Mi"
+              cpu: "0.25"

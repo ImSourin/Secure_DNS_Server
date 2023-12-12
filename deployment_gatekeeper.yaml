@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dns-gatekeeper
+spec:
+  replicas: 1  # Adjust the number of replicas as needed
+  selector:
+    matchLabels:
+      app: dns-gatekeeper
+  template:
+    metadata:
+      labels:
+        app: dns-gatekeeper
+    spec:
+      containers:
+        - name: dns-gatekeeper
+          image: dns_gkp
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 53
+              protocol: UDP
+              name: dns-gkp-port
+          resources:
+            limits:
+              memory: "256Mi"
+              cpu: "0.5"
+            requests:
+              memory: "128Mi"
+              cpu: "0.25"
