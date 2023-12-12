@@ -1,0 +1,19 @@
+FROM ubuntu:latest
+LABEL authors="souri"
+
+# Set the working directory inside the container
+WORKDIR /app
+
+# Update the package list and install necessary packages
+RUN apt-get update && \
+    apt-get install -y python3 python3-pip
+
+# Copy the Python script into the container
+COPY dns_DOS.py .
+
+COPY requirements.txt .
+
+RUN pip install -r requirements.txt
+
+# Command to run the Python server
+CMD ["python3", "dns_DOS.py", "--host=127.0.0.1", "--port=31110", "--timeout=10", "--num_threads=5"]
