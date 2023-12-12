@@ -1,11 +1,11 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: dns-service
+  name: dns-service-primary
   namespace: default
 spec:
   selector:
-    app: dns-server
+    app: dns-server-primary
   type: ClusterIP
   ports:
     - name: udp

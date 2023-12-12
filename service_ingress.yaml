@@ -15,10 +15,10 @@ spec:
   externalTrafficPolicy: Local
   ports:
     - name: udp
-      port: 31111
+      port: 31110
       protocol: UDP
-      targetPort: 31111
-      nodePort: 31111
+      targetPort: 31110
+      nodePort: 31110
   selector:
     app.kubernetes.io/name: ingress-nginx
     app.kubernetes.io/instance: ingress-nginx

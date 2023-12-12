@@ -1,25 +1,25 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: dns-gatekeeper
+  name: dns-server-secondary
 spec:
   replicas: 1  # Adjust the number of replicas as needed
   selector:
     matchLabels:
-      app: dns-gatekeeper
+      app: dns-server-secondary
   template:
     metadata:
       labels:
-        app: dns-gatekeeper
+        app: dns-server-secondary
     spec:
       containers:
-        - name: dns-gatekeeper
-          image: dns_gkp
+        - name: dns-server-secondary
+          image: dns_server_secondary
           imagePullPolicy: Never
           ports:
-            - containerPort: 31110
+            - containerPort: 31112
               protocol: UDP
-              name: dns-gkp-port
+              name: dns-svc-port
           resources:
             limits:
               memory: "256Mi"

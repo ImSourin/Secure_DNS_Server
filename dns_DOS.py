@@ -25,14 +25,14 @@ def attack(host="127.0.0.1", port=31110, timeout=100, num_threads=5):
         executor.submit(dns_query, resolver, timer)
     executor.shutdown()
 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--host', default="127.0.0.1", help = "Host IP address")
-    parser.add_argument('--port', type = int, default=31111, help = "Host port")
-    parser.add_argument('--timeout', type = int, default = 100, help = 'Attack duration')
-    parser.add_argument('--num_threads', type = int, default = 5, help = 'Number of threads')
+    parser.add_argument('--host', default="127.0.0.1", help="Host IP address")
+    parser.add_argument('--port', type=int, default=31111, help="Host port")
+    parser.add_argument('--timeout', type=int, default=100, help='Attack duration')
+    parser.add_argument('--num_threads', type=int, default=5, help='Number of threads')
 
-    args =  parser.parse_args()
+    args = parser.parse_args()
 
     attack(args.host, args.port, args.timeout, args.num_threads)
-

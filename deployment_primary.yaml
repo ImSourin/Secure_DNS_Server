@@ -1,20 +1,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: dns-server
+  name: dns-server-primary
 spec:
   replicas: 1  # Adjust the number of replicas as needed
   selector:
     matchLabels:
-      app: dns-server
+      app: dns-server-primary
   template:
     metadata:
       labels:
-        app: dns-server
+        app: dns-server-primary
     spec:
       containers:
-        - name: dns-server
-          image: dns_server
+        - name: dns-server-primary
+          image: dns_server_primary
           imagePullPolicy: Never
           ports:
             - containerPort: 31111

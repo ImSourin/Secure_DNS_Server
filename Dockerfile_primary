@@ -13,14 +13,14 @@ COPY dns_server.py .
 
 COPY requirements.txt .
 
-COPY zones/* ./zones/
+COPY zones/test_primary.zone ./zones/
+
+COPY keys/primary.pem ./keys/
 
 RUN pip install -r requirements.txt
 
 # Expose the port that the Python server will run on
 EXPOSE 31111
 
-EXPOSE 31112
-
 # Command to run the Python server
-CMD ["python3", "dns_server.py"]
+CMD ["python3", "dns_server.py", "--port=31111", "--zone_file=zones/test_primary.zone", "--private_key_path=keys/primary.pem"]

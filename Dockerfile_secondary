@@ -9,15 +9,18 @@ RUN apt-get update && \
     apt-get install -y python3 python3-pip
 
 # Copy the Python script into the container
-COPY dns_gatekeeper.py .
+COPY dns_server.py .
 
 COPY requirements.txt .
+
+COPY zones/test_secondary.zone ./zones/
+
+COPY keys/secondary.pem ./keys/
 
 RUN pip install -r requirements.txt
 
 # Expose the port that the Python server will run on
-
-EXPOSE 31110
+EXPOSE 31112
 
 # Command to run the Python server
-CMD ["python3", "dns_gatekeeper.py", "--primary_ns_host=127.0.0.1", "--primary_ns_port=31111", "--secondary_ns_host=127.0.0.1", "--secondary_ns_port=31112", "--port=31110"]
+CMD ["python3", "dns_server.py", "--port=31112", "--zone_file=zones/test_secondary.zone", "--private_key_path=keys/secondary.pem"]

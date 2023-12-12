@@ -4,4 +4,4 @@ metadata:
   name: udp-services
   namespace: kube-system
 data:
-  31111: "default/dns-server:31111"
+  31110: "default/dns-gatekeeper:31110"

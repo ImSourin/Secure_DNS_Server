@@ -42,12 +42,12 @@ class MyDNSGatekeeper:
         resolver.nameservers = [host]
         return resolver.resolve(query_name, dns.rdatatype.from_text(query_type))
 
-    def zone_transfer(self, host, port):
+    def zone_transfer(self, host, port, target_host, target_port):
         # Create a UDP socket
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
         # Send a message to the server
-        msg = "ZONE_TRANSFER example.com " + host + " " + port
+        msg = "ZONE_TRANSFER example.com " + target_host + " " + target_port
         client_socket.sendto(msg.encode('utf-8'), (host, port))
 
         # Receive the response from the server
@@ -129,7 +129,8 @@ class MyDNSGatekeeper:
             while True:
                 time.sleep(100)
                 print("Performing a zone tranfer")
-                self.zone_transfer(self.secondary_ns_host, self.secondary_ns_port)
+                self.zone_transfer(self.secondary_ns_host, self.secondary_ns_port,
+                                   self.primary_ns_host, self.primary_ns_port)
         except KeyboardInterrupt:
             pass
 

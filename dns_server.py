@@ -230,9 +230,9 @@ class MyDNSHandler:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--port", type = int, default = 31111, help="specify dns port")
-    parser.add_argument("--zone_file", default = "zones/test_primary.zone", help="specify zone file")
-    parser.add_argument("--private_key_path", default = "keys/primary.pem", help="specify private key file")
+    parser.add_argument("--port", type=int, default=31111, help="specify dns port")
+    parser.add_argument("--zone_file", default="zones/test_primary.zone", help="specify zone file")
+    parser.add_argument("--private_key_path", default="keys/primary.pem", help="specify private key file")
 
     args = parser.parse_args()
     resolver = MyDNSHandler(port=args.port, zone_file_path=args.zone_file,
