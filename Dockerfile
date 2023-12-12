@@ -13,12 +13,16 @@ RUN pip install dnspython aioschedule
 # Copy the Python script into the container
 COPY dns_server.py .
 
+COPY requirements.txt .
+
 COPY zones/* ./zones/
 
-# Expose the port that the Python server will run on
-EXPOSE 53
+RUN pip install -r requirements.txt
 
+# Expose the port that the Python server will run on
 EXPOSE 31111
+
+EXPOSE 31112
 
 # Command to run the Python server
 CMD ["python3", "dns_server.py"]
