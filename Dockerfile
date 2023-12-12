@@ -8,8 +8,6 @@ WORKDIR /app
 RUN apt-get update && \
     apt-get install -y python3 python3-pip
 
-RUN pip install dnspython aioschedule
-
 # Copy the Python script into the container
 COPY dns_server.py .
 

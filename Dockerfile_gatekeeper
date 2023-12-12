@@ -8,14 +8,14 @@ WORKDIR /app
 RUN apt-get update && \
     apt-get install -y python3 python3-pip
 
-RUN pip install dnspython aioschedule
-
 # Copy the Python script into the container
 COPY dns_gatekeeper.py .
 
-COPY utils/dns_test.py .
+COPY requirements.txt .
 
 COPY zones/* ./zones/
+
+RUN pip install -r requirements.txt
 
 # Expose the port that the Python server will run on
 EXPOSE 53

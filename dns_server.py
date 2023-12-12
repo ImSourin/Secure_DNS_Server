@@ -15,8 +15,7 @@ from cryptography.hazmat.primitives import serialization
 
 class MyDNSHandler:
     def __init__(self, forwarding_server="1.1.1.1", zone_file_path="./zones/test_primary.zone",
-                 private_key_path="./keys/primary.pem", public_key_path="./zones/public_keys/primary.pem",
-                 listen_address="", port=31111):
+                 private_key_path="./keys/primary.pem", listen_address="", port=31111):
 
         # Set the forwarding DNS server
         self.forwarding_server = forwarding_server
@@ -231,12 +230,12 @@ class MyDNSHandler:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--port", help="specify dns port")
-    parser.add_argument("--zone_file", help="specify zone file")
-    parser.add_argument("--private_key_path", help="specify private key file")
-    parser.add_argument("--public_key_path", help="specify public key file")
+    parser.add_argument("--port", type = int, default = 31111, help="specify dns port")
+    parser.add_argument("--zone_file", default = "zones/test_primary.zone", help="specify zone file")
+    parser.add_argument("--private_key_path", default = "keys/primary.pem", help="specify private key file")
+
     args = parser.parse_args()
-    resolver = MyDNSHandler(port=int(args.port), zone_file_path=args.zone_file,
-                            private_key_path=args.private_key_path, public_key_path=args.public_key_path)
+    resolver = MyDNSHandler(port=args.port, zone_file_path=args.zone_file,
+                            private_key_path=args.private_key_path)
 
     resolver.run()

@@ -76,7 +76,7 @@ class MyDNSGatekeeper:
     def validate(self, sender_ip):
         if sender_ip in self.history:
             self.history[sender_ip] += 1
-            if self.history[sender_ip] > 10:
+            if self.history[sender_ip] > 100:
                 return False
             return True
         else:
@@ -136,15 +136,15 @@ class MyDNSGatekeeper:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--port", help="specify dns gatekeeper port")
-    parser.add_argument("--primary_ns_host", help="specify primary dns host")
-    parser.add_argument("--primary_ns_port", help="specify primary dns port")
-    parser.add_argument("--secondary_ns_host", help="specify secondary dns host")
-    parser.add_argument("--secondary_ns_port", help="specify secondary dns port")
+    parser.add_argument("--port", type=int, default=31110, help="specify dns gatekeeper port")
+    parser.add_argument("--primary_ns_host", default="127.0.0.1", help="specify primary dns host")
+    parser.add_argument("--primary_ns_port", type=int, default=31111, help="specify primary dns port")
+    parser.add_argument("--secondary_ns_host", default="127.0.0.1", help="specify secondary dns host")
+    parser.add_argument("--secondary_ns_port", type=int, default=31112, help="specify secondary dns port")
     args = parser.parse_args()
 
-    resolver = MyDNSGatekeeper(args.primary_ns_host, int(args.primary_ns_port), args.secondary_ns_host,
-                               int(args.secondary_ns_port), port=int(args.port))
+    resolver = MyDNSGatekeeper(args.primary_ns_host, args.primary_ns_port, args.secondary_ns_host,
+                               args.secondary_ns_port, port=args.port)
 
     executor = ThreadPoolExecutor(3)
 
