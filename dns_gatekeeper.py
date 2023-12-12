@@ -28,7 +28,7 @@ class MyDNSGatekeeper:
 
         key = uuid.uuid4().int
 
-        if len(request.update):
+        if hasattr(request, 'update') and len(request.update):
             return self.add_record(request)
 
         if key % 2 == 0:
@@ -47,7 +47,8 @@ class MyDNSGatekeeper:
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
         # Send a message to the server
-        client_socket.sendto("ZONE_TRANSFER example.com".encode('utf-8'), (host, port))
+        msg = "ZONE_TRANSFER example.com " + host + " " + port
+        client_socket.sendto(msg.encode('utf-8'), (host, port))
 
         # Receive the response from the server
         response, server_address = client_socket.recvfrom(1024)

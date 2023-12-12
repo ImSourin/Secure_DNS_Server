@@ -1,9 +1,11 @@
 $ORIGIN example.com.
 example.com. 0 IN SOA ns1.example.com. admin.example.com. 2021120901 3600 1800 604800 3600
-example.com. 3600 IN NS ns1.example.com.
-ns1.example.com. 3600 IN A 192.168.1.1
+example.com. 0 IN NS ns1.example.com.
+example.com. 0 IN DNSKEY 256 3 8 AwEAAbIZUh8RGgzvU8/573U4JBPnYtgf TObiwoqLA88Mhmbbz2jrL/9uT2zFgpts jrTMhIreU0AoAzCuzZB71hBzQYKrRVjP 7/VNb4audRs4AMoPAZhrHprkvCyle3As IaHhsU0oABMBxGBIKNWdJR4S4NLwhnPd x/fiDU0G4vqxJkE93g5JUz06OhhyI4ci eo2CI7Gt0CgJ2PX5q/IG4432pblui0rm dS3LySCXAa3tyn8rT/nVmyQIob8L8jEw +iCdpzPI5lHIu9zRjp+dgV7PNWNK9CuF Ldqe1XH8MsRAt02FklDRtxnmW0+WZMOz lchbfTFLgqfCe6faiq0DHCZluPU=
+ns1.example.com. 0 IN A 192.168.1.1
 ns3.example.com. 0 IN A 192.168.1.9
 ns4.example.com. 0 IN A 192.168.1.9
 ns5.example.com. 0 IN A 192.168.1.4
-www.example.com. 3600 IN A 192.168.1.2
-www.example.com. 3600 IN MX 10 mail.example.com.
+ns7.example.com. 0 IN A 192.168.1.8
+www.example.com. 0 IN A 192.168.1.2
+www.example.com. 0 IN MX 10 mail.example.com.

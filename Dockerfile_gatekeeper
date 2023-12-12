@@ -13,7 +13,7 @@ RUN pip install dnspython aioschedule
 # Copy the Python script into the container
 COPY dns_gatekeeper.py .
 
-COPY dns_test.py .
+COPY utils/dns_test.py .
 
 COPY zones/* ./zones/
 
