@@ -161,6 +161,11 @@ class MyDNSHandler:
 
             self.zone.check_origin()
 
+            znode = self.zone.nodes.get(self.zone.origin)
+            zrds = znode.find_rdataset(dns.rdataclass.IN, dns.rdatatype.DNSKEY)
+
+            zrds.discard(self.public_key)
+
             # Save the modified zone back to the file
             with open(self.zone_file_path, 'w') as zone_file:
                 self.zone.to_file(zone_file, relativize=False, want_origin=True)

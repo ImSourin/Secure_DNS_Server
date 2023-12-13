@@ -6,5 +6,6 @@ ns3.example.com. 0 IN A 192.168.1.9
 ns4.example.com. 0 IN A 192.168.1.9
 ns5.example.com. 0 IN A 192.168.1.4
 ns7.example.com. 0 IN A 192.168.1.8
+ns8.example.com. 0 IN A 192.168.2.1
 www.example.com. 0 IN A 192.168.1.2
 www.example.com. 0 IN MX 10 mail.example.com.

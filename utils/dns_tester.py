@@ -12,10 +12,15 @@ def get_record():
     for rdata in answers:
         print(rdata)
 
+    answers = resolver.resolve('www.google.com', dns.rdatatype.A)
+
+    for rdata in answers:
+        print(rdata)
+
 def add_record():
     update = dns.update.Update("example.com")
 
-    update.add("ns7", 300, "A", "192.168.1.8")
+    update.add("ns8", 300, "A", "192.168.2.1")
 
     print(dns.query.udp(update, "127.0.0.1", port=31110))
 
@@ -36,7 +41,7 @@ def perform_axfr_query(zone_name="example.com", master_ip="127.0.0.1"):
     zone = dns.zone.from_xfr(axfr_request, relativize=False)
     print(zone)
 
-def udp_client(host="127.0.0.1", port="31112", message="ZONE_TRANSFER example.com 127.0.0.1 31111"):
+def udp_client(host="127.0.0.1", port=31112, message="ZONE_TRANSFER example.com 127.0.0.1 31111"):
     # Create a UDP socket
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
@@ -52,3 +57,5 @@ def udp_client(host="127.0.0.1", port="31112", message="ZONE_TRANSFER example.co
 
     # Close the socket
     client_socket.close()
+
+udp_client()

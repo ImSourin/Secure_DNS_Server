@@ -32,8 +32,10 @@ class MyDNSGatekeeper:
             return self.add_record(request)
 
         if key % 2 == 0:
+            print("Forwarding request to primary server")
             return self.forward_query(query_name, query_type, self.primary_ns_host, self.primary_ns_port)
         else:
+            print("Forwarding request to secondary server")
             return self.forward_query(query_name, query_type, self.secondary_ns_host, self.secondary_ns_port)
 
     def forward_query(self, query_name, query_type, host, port):
