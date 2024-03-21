@@ -47,6 +47,23 @@ class MyDNSHandler:
         else:
             # Handle other query types based on the loaded zone
             return self.handle_standard_query(query_name, query_type)
+        
+    def validate_dnssec(self, response):
+        # Check if the response object has the 'answer' attribute
+        if not hasattr(response, 'answer'):
+            print("Response object does not have 'answer' attribute. Skipping DNSSEC validation.")
+            return False
+
+        # Check if the response contains any answer records
+        if not response.answer:
+            print("No answer records in the response. Skipping DNSSEC validation.")
+            return False
+
+        try:
+            dns.dnssec.validate(response, {response.answer[0].name: response.answer[0]}, {})
+            return True
+        except dns.dnssec.ValidationFailure:
+            return False
 
     def handle_standard_query(self, query_name, query_type):
         # Handle other query types based on the loaded zone
@@ -181,7 +198,7 @@ class MyDNSHandler:
         resolver = dns.resolver.Resolver()
         resolver.nameservers = [self.forwarding_server]
         return resolver.resolve(query_name, dns.rdatatype.from_text(query_type))
-
+    
     def run(self):
         try:
             while True:
@@ -218,14 +235,17 @@ class MyDNSHandler:
                     self.socket.sendto(reply.to_wire(), addr)
                     continue
 
-                response = dns.message.make_response(request)
+                if self.validate_dnssec(reply):  # Validate DNSSEC
+                    response = dns.message.make_response(request)
 
-                if hasattr(reply, 'rrset'):
-                    response.answer.append(reply.rrset)
+                    if hasattr(reply, 'rrset'):
+                        response.answer.append(reply.rrset)
+                    else:
+                        response.answer.append(reply)
+
+                    self.socket.sendto(response.to_wire(), addr)
                 else:
-                    response.answer.append(reply)
-
-                self.socket.sendto(response.to_wire(), addr)
+                    print("DNSSEC validation failed. Potential cache poisoning attempt.")
 
         except KeyboardInterrupt:
             pass
