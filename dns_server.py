@@ -1,4 +1,6 @@
 import argparse
+import copy
+
 import dns
 import dns.message
 import dns.resolver
@@ -46,23 +48,6 @@ class MyDNSHandler:
         else:
             # Handle other query types based on the loaded zone
             return self.handle_standard_query(query_name, query_type)
-        
-    def validate_dnssec(self, response):
-        # Check if the response object has the 'answer' attribute
-        if not hasattr(response, 'answer'):
-            print("Response object does not have 'answer' attribute. Skipping DNSSEC validation.")
-            return False
-
-        # Check if the response contains any answer records
-        if not response.answer:
-            print("No answer records in the response. Skipping DNSSEC validation.")
-            return False
-
-        try:
-            dns.dnssec.validate(response, {response.answer[0].name: response.answer[0]}, {})
-            return True
-        except dns.dnssec.ValidationFailure:
-            return False
 
     def handle_standard_query(self, query_name, query_type):
         # Handle other query types based on the loaded zone
@@ -166,6 +151,7 @@ class MyDNSHandler:
     def add_record(self, request):
         try:
             # Add the new record to the zone
+            zone_checkpoint = copy.deepcopy(self.zone)
             node = self.zone.nodes.get(request.update[0].name)
             if not node:
                 node = self.zone.node_factory()
@@ -182,11 +168,18 @@ class MyDNSHandler:
 
             zrds.discard(self.public_key)
 
+            try:
+                self.zone = self.validate_zone(self.zone)
+            except Exception as e:
+                print(f"Skipping update: {e}")
+                self.zone = zone_checkpoint
+                return None
+
             # Save the modified zone back to the file
             with open(self.zone_file_path, 'w') as zone_file:
                 self.zone.to_file(zone_file, relativize=False, want_origin=True)
 
-            print("Add record successful")
+            print("Add record finished")
 
             return request.update[0]
 
@@ -245,17 +238,17 @@ class MyUDPDNSHandler(MyDNSHandler):
                     self.socket.sendto(reply.to_wire(), addr)
                     continue
 
-                if self.validate_dnssec(reply):  # Validate DNSSEC
-                    response = dns.message.make_response(request)
+                response = dns.message.make_response(request)
 
+                if reply is not None:
                     if hasattr(reply, 'rrset'):
                         response.answer.append(reply.rrset)
                     else:
                         response.answer.append(reply)
-
-                    self.socket.sendto(response.to_wire(), addr)
                 else:
-                    print("DNSSEC validation failed. Potential cache poisoning attempt.")
+                    response.set_rcode(dns.rcode.NXRRSET)
+
+                self.socket.sendto(response.to_wire(), addr)
 
         except KeyboardInterrupt:
             pass
@@ -293,12 +286,14 @@ class MySSLDNSHandler(MyDNSHandler):
 
                 response = dns.message.make_response(request)
 
-                if hasattr(reply, 'rrset'):
-                    response.answer.append(reply.rrset)
+                if reply is not None:
+                    if hasattr(reply, 'rrset'):
+                        response.answer.append(reply.rrset)
+                    else:
+                        response.answer.append(reply)
                 else:
-                    response.answer.append(reply)
+                    response.set_rcode(dns.rcode.NXRRSET)
 
-                print(response)
                 dns.query.send_tcp(connection, response.to_wire())
 
         except KeyboardInterrupt:
@@ -337,12 +332,14 @@ class MyHTTPSDNSHandler(MySSLDNSHandler):
 
                 response = dns.message.make_response(request)
 
-                if hasattr(reply, 'rrset'):
-                    response.answer.append(reply.rrset)
+                if reply is not None:
+                    if hasattr(reply, 'rrset'):
+                        response.answer.append(reply.rrset)
+                    else:
+                        response.answer.append(reply)
                 else:
-                    response.answer.append(reply)
+                    response.set_rcode(dns.rcode.NXRRSET)
 
-                print(response)
                 response_headers = f'HTTP/1.1\r\nstatus: 200\r\ncontent-type: application/dns-message\r\ncontent-length: {len(response.to_wire())}\r\n'
                 connection.send(response_headers.encode('utf-8'))
                 connection.send(response.to_wire())
