@@ -7,6 +7,9 @@ import dns.query
 import dns.dnssec
 import socket
 from dns.zone import Zone
+import ssl
+import traceback
+import re
 
 from dns.exception import ValidationFailure
 
@@ -14,9 +17,7 @@ from cryptography.hazmat.primitives import serialization
 
 
 class MyDNSHandler:
-    def __init__(self, forwarding_server="1.1.1.1", zone_file_path="./zones/test_primary.zone",
-                 private_key_path="./keys/primary.pem", listen_address="", port=31111):
-
+    def __init__(self, forwarding_server, zone_file_path, private_key_path):
         # Set the forwarding DNS server
         self.forwarding_server = forwarding_server
         self.zone_file_path = zone_file_path
@@ -32,8 +33,6 @@ class MyDNSHandler:
 
         self.public_key = dns.dnssec.make_dnskey(self.private_key.public_key(), 8)
         zrds.add(self.public_key)
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.socket.bind((listen_address, port))
 
     def resolve(self, request):
         query_name = str(request.question[0].name)
@@ -200,6 +199,17 @@ class MyDNSHandler:
         return resolver.resolve(query_name, dns.rdatatype.from_text(query_type))
     
     def run(self):
+        raise NotImplementedError
+
+
+class MyUDPDNSHandler(MyDNSHandler):
+    def __init__(self, forwarding_server="1.1.1.1", zone_file_path="./zones/test_primary.zone",
+                 private_key_path="./keys/primary.pem", listen_address="", port=31111):
+        super().__init__(forwarding_server, zone_file_path, private_key_path)
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.socket.bind((listen_address, port))
+
+    def run(self):
         try:
             while True:
                 data, addr = self.socket.recvfrom(4096)
@@ -253,14 +263,117 @@ class MyDNSHandler:
             self.socket.close()
 
 
+class MySSLDNSHandler(MyDNSHandler):
+    def __init__(self, forwarding_server="1.1.1.1", zone_file_path="./zones/test_primary.zone",
+                 private_key_path="./keys/primary.pem", listen_address="", port=31111):
+        super().__init__(forwarding_server, zone_file_path, private_key_path)
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.bind((listen_address, port))
+        self.socket.listen(5)
+
+    def run(self):
+        try:
+            ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+            ssl_context.load_cert_chain('ssl_certs/client.crt', 'ssl_certs/client.key')
+            connection_socket = ssl_context.wrap_socket(self.socket, server_side=True)
+            while True:
+                try:
+                    connection, addr = connection_socket.accept()
+                    request = dns.query.receive_tcp(connection)
+                    request = request[0]
+                    reply = self.resolve(request)
+                except dns.resolver.NXDOMAIN:
+                    print("NOT FOUND")
+                    continue
+
+                if (dns.rdatatype.to_text(request.question[0].rdtype) == "AXFR" or
+                        dns.rdatatype.to_text(request.question[0].rdtype) == "IXFR"):
+                    dns.query.send_tcp(connection, reply.to_wire())
+                    continue
+
+                response = dns.message.make_response(request)
+
+                if hasattr(reply, 'rrset'):
+                    response.answer.append(reply.rrset)
+                else:
+                    response.answer.append(reply)
+
+                print(response)
+                dns.query.send_tcp(connection, response.to_wire())
+
+        except KeyboardInterrupt:
+            pass
+        finally:
+            connection.close()
+
+
+class MyHTTPSDNSHandler(MySSLDNSHandler):
+
+    def run(self):
+        try:
+            ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+            ssl_context.load_cert_chain('ssl_certs/client.crt', 'ssl_certs/client.key')
+            connection_socket = ssl_context.wrap_socket(self.socket, server_side=True)
+            while True:
+                try:
+                    connection, addr = connection_socket.accept()
+                    header = connection.recv(4096).decode('utf-8')
+                    data = connection.recv(int(re.findall(r'content-length: (\d+)', header)[0]))
+                    request = dns.message.from_wire(data)
+                    reply = self.resolve(request)
+                except dns.resolver.NXDOMAIN:
+                    print("NOT FOUND")
+                    continue
+                except Exception:
+                    print(traceback.format_exc())
+
+                if (dns.rdatatype.to_text(request.question[0].rdtype) == "AXFR" or
+                        dns.rdatatype.to_text(request.question[0].rdtype) == "IXFR"):
+                    response_headers = f'HTTP/1.0\r\nstatus: 200\r\ncontent-type: application/dns-message\r\ncontent-length: {len(reply.to_wire())}\r\n'
+                    connection.send(response_headers.encode('utf-8'))
+                    connection.send(reply.to_wire())
+
+                    continue
+
+                response = dns.message.make_response(request)
+
+                if hasattr(reply, 'rrset'):
+                    response.answer.append(reply.rrset)
+                else:
+                    response.answer.append(reply)
+
+                print(response)
+                response_headers = f'HTTP/1.1\r\nstatus: 200\r\ncontent-type: application/dns-message\r\ncontent-length: {len(response.to_wire())}\r\n'
+                connection.send(response_headers.encode('utf-8'))
+                connection.send(response.to_wire())
+
+        except KeyboardInterrupt:
+            pass
+        except Exception as e:
+            response = "Not Found"
+            response_headers = f'HTTP/1.1\r\nstatus: 404\r\ncontent-type: application/dns-message\r\ncontent-length: {len(response.encode('utf-8'))}\r\n'
+            connection.send(response_headers.encode('utf-8'))
+            connection.send(response.encode('utf-8'))
+        finally:
+            self.socket.close()
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--port", type=int, default=31111, help="specify dns port")
     parser.add_argument("--zone_file", default="zones/test_primary.zone", help="specify zone file")
     parser.add_argument("--private_key_path", default="keys/primary.pem", help="specify private key file")
+    parser.add_argument("--mode", type=str, default=True, help="https for DoH, ssl for DoT, udp otherwise")
 
     args = parser.parse_args()
-    resolver = MyDNSHandler(port=args.port, zone_file_path=args.zone_file,
-                            private_key_path=args.private_key_path)
+    if args.mode == 'https':
+        resolver = MyHTTPSDNSHandler(port=args.port, zone_file_path=args.zone_file,
+                                     private_key_path=args.private_key_path)
+    elif args.mode == 'ssl':
+        resolver = MySSLDNSHandler(port=args.port, zone_file_path=args.zone_file,
+                                 private_key_path=args.private_key_path)
+    else:
+        resolver = MyUDPDNSHandler(port=args.port, zone_file_path=args.zone_file,
+                                   private_key_path=args.private_key_path)
 
     resolver.run()

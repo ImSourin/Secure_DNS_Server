@@ -5,7 +5,7 @@ import socket
 
 def get_record():
     resolver = dns.resolver.Resolver()
-    resolver.port = 31110
+    resolver.port = 31111
     resolver.nameservers = ["127.0.0.1"]
     answers = resolver.resolve('ns1.example.com', dns.rdatatype.A)
 
@@ -58,4 +58,4 @@ def udp_client(host="127.0.0.1", port=31112, message="ZONE_TRANSFER example.com 
     # Close the socket
     client_socket.close()
 
-udp_client()
+get_record()
